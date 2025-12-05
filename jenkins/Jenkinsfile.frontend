@@ -31,26 +31,29 @@ pipeline {
     }
 
 
-    stage('Build Image') {
+    stage('Build Info') {
       steps {
         sh """
-          echo "Would build: docker build -t bank-frontend ./frontend"
-          echo "Image: ${IMAGE}"
+          echo "📦 Image to build: ${IMAGE}"
+          echo "📁 Deployment file: k8s/gitops/base/frontend/deployment.yaml"
         """
       }
     }
 
-    stage('Update k8s Manifests') {
+    stage('Update GitOps Manifests') {
       steps {
         sh """
-          git config user.email "jenkins@local"
-          git config user.name "jenkins"
-
-          sed -i "s|bank-frontend:.*|bank-frontend:${BUILD_NUMBER}|g" k8s/frontend/deployment.yaml
-
-          git add k8s/frontend/deployment.yaml
-          git commit -m "Update frontend image tag to ${BUILD_NUMBER}" || true
-          git push || true
+          echo "🔄 Updating frontend manifests..."
+          
+          # Update frontend deployment.yaml
+          cd k8s/gitops/base/frontend
+          
+          # Update image tag
+          sed -i "s|image: milindpatle12/bank-frontend:.*|image: milindpatle12/bank-frontend:${BUILD_NUMBER}|g" deployment.yaml
+          
+          echo "✅ Updated frontend to tag: ${BUILD_NUMBER}"
+          
+          cd ../../../../..
         """
       }
     }

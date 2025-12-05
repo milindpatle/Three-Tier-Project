@@ -1,5 +1,5 @@
 pipeline {
-  agent any  // Changed from docker agent
+  agent any
 
   environment {
     REGISTRY = "milindpatle12"
@@ -16,44 +16,92 @@ pipeline {
     stage('Setup Docker') {
       steps {
         script {
-          // Try to install Docker if not available
           sh '''
             #!/bin/bash
             if ! command -v docker &> /dev/null; then
-              echo "Docker not found. To install:"
+              echo "⚠️ Docker not found. To install:"
               echo "sudo apt-get update && sudo apt-get install -y docker.io"
               echo "sudo systemctl start docker"
-              exit 0  # Don't fail, just continue
+              echo "Note: Docker build will be skipped for now"
+            else
+              echo "✅ Docker is available:"
+              docker --version
             fi
-            docker --version
           '''
         }
       }
     }
 
-    stage('Build Image') {
+    stage('Build Info') {
       steps {
         sh """
-          echo "Would build: docker build -t bank-backend ./backend"
-          echo "Image: ${IMAGE}"
-          echo "Note: Docker not available on Jenkins"
+          echo "📦 Image to build: ${IMAGE}"
+          echo "📁 Deployment file: k8s/gitops/base/backend/deployment.yaml"
+          echo "🔧 Build command would be: docker build -t ${IMAGE} ./backend"
         """
       }
     }
 
-    stage('Update k8s Manifests') {
+    stage('Update GitOps Manifests') {
       steps {
         sh """
-          git config user.email "jenkins@local"
-          git config user.name "jenkins"
-
-          sed -i "s|bank-backend:.*|bank-backend:${BUILD_NUMBER}|g" k8s/backend/deployment.yaml
-
-          git add k8s/backend/deployment.yaml
-          git commit -m "Update backend image tag to ${BUILD_NUMBER}" || true
-          git push || true
+          echo "🔄 Updating GitOps manifests..."
+          
+          # Navigate to the correct directory
+          cd k8s/gitops/base/backend
+          
+          echo "📄 Current deployment.yaml content:"
+          cat deployment.yaml
+          
+          # Update image tag from latest to BUILD_NUMBER
+          sed -i "s|image: milindpatle12/bank-backend:.*|image: milindpatle12/bank-backend:${BUILD_NUMBER}|g" deployment.yaml
+          
+          echo "✅ Updated deployment.yaml with tag: ${BUILD_NUMBER}"
+          echo "📄 Updated content:"
+          cat deployment.yaml
+          
+          # Go back to root
+          cd ../../../../..
         """
       }
+    }
+    
+    stage('Commit Changes') {
+      steps {
+        sh """
+          echo "💾 Committing changes..."
+          
+          git config user.email "jenkins@local"
+          git config user.name "jenkins"
+          
+          # Add the updated file
+          git add k8s/gitops/base/backend/deployment.yaml
+          
+          # Commit
+          git commit -m "CI: Update backend image to v${BUILD_NUMBER}" || echo "No changes to commit"
+          
+          # Push (optional - remove # to enable)
+          # git push origin main || echo "Push failed or not configured"
+          
+          echo "✅ Changes committed!"
+          echo "📌 Image: milindpatle12/bank-backend:${BUILD_NUMBER}"
+          echo "📁 File: k8s/gitops/base/backend/deployment.yaml"
+        """
+      }
+    }
+  }
+  
+  post {
+    always {
+      echo "🏁 Pipeline finished"
+    }
+    success {
+      echo "🎉 SUCCESS: Backend pipeline completed!"
+      echo "📦 Image: milindpatle12/bank-backend:${BUILD_NUMBER}"
+      echo "📝 Updated: k8s/gitops/base/backend/deployment.yaml"
+    }
+    failure {
+      echo "❌ FAILURE: Pipeline failed"
     }
   }
 }
