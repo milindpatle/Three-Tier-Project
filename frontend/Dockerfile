@@ -8,6 +8,7 @@ RUN npm run build
 
 # Step 2: Serve with NGINX (production-grade)
 FROM nginx:alpine
-COPY --from=builder /app/build /usr/share/nginx/html
-EXPOSE 80
+COPY public /usr/share/nginx/html   
+ENV BACKEND_URL=http://backend:5000
 CMD ["nginx", "-g", "daemon off;"]
+    

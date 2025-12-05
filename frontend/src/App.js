@@ -1,7 +1,8 @@
-// Minimal UI using vanilla JS. Uses BACKEND_URL env (set by Docker Compose / k8s).
 (function () {
-  const root = document.getElementById('root');
-  const backend = window.__BACKEND_URL || (typeof process !== 'undefined' && process.env && process.env.BACKEND_URL) || 'http://localhost:5000';
+  const root = document.getElementById("root");
+
+  // backend URL from environment
+  const backend = window.__BACKEND_URL || "http://localhost:5000";
 
   root.innerHTML = `
     <h2>Simple Bank App</h2>
@@ -21,19 +22,31 @@
     <pre id="out"></pre>
   `;
 
-  function api(path, opts) {
-    return fetch(backend + path, opts).then(r => r.json());
+  async function api(path, opts) {
+    const res = await fetch(backend + path, opts);
+    return res.json();
   }
 
-  document.getElementById('reg').onclick = async () => {
-    const u = document.getElementById('u').value, p = document.getElementById('p').value;
-    const res = await api('/register', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username: u, password: p})});
-    document.getElementById('out').innerText = JSON.stringify(res, null, 2);
+  document.getElementById("reg").onclick = async () => {
+    const u = document.getElementById("u").value;
+    const p = document.getElementById("p").value;
+    const res = await api("/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: u, password: p }),
+    });
+    document.getElementById("out").innerText = JSON.stringify(res, null, 2);
   };
 
-  document.getElementById('trans').onclick = async () => {
-    const from = document.getElementById('from').value, to = document.getElementById('to').value, amt = document.getElementById('amt').value;
-    const res = await api('/transfer', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({from, to, amount: amt})});
-    document.getElementById('out').innerText = JSON.stringify(res, null, 2);
+  document.getElementById("trans").onclick = async () => {
+    const from = document.getElementById("from").value;
+    const to = document.getElementById("to").value;
+    const amt = document.getElementById("amt").value;
+    const res = await api("/transfer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ from, to, amount: amt }),
+    });
+    document.getElementById("out").innerText = JSON.stringify(res, null, 2);
   };
 })();
