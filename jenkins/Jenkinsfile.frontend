@@ -1,9 +1,8 @@
 pipeline {
-
   agent {
     docker {
-      image 'docker:24.0'
-      args '-v /var/run/docker.sock:/var/run/docker.sock'
+      image 'docker:24.0-dind'  // THIS IS THE FIX
+      args '--privileged'
     }
   }
 
@@ -13,7 +12,6 @@ pipeline {
   }
 
   stages {
-
     stage('Checkout') {
       steps {
         checkout scm
@@ -54,6 +52,5 @@ pipeline {
         """
       }
     }
-
   }
 }
