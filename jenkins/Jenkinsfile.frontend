@@ -7,7 +7,7 @@ pipeline {
   }
 
   environment {
-    REGISTRY = "${env.REGISTRY_URL ?: 'your-registry-url'}"
+    REGISTRY = "milindpatle12"
     IMAGE = "${REGISTRY}/bank-frontend:${BUILD_NUMBER}"
   }
 
